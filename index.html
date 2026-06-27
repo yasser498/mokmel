@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>مراجعة المكملين</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar no-print">
+      <div class="brand">
+        <div class="brand-mark">ر</div>
+        <div>
+          <h1>مراجعة المكملين</h1>
+          <p>استخراج أسماء الطلاب والنتيجة من Excel أو PDF</p>
+        </div>
+      </div>
+
+      <section class="panel upload-panel" id="dropZone">
+        <div class="upload-icon">📁</div>
+        <h2>رفع المسودات</h2>
+        <p>الرجاء رفع <b>ملف إكسل واحد أو أكثر</b> (مثلاً مسودات عدة فصول) ليتم قراءتها والتعرف على المكملين تلقائياً.</p>
+        <input id="fileInput" type="file" multiple accept=".xlsx,.xls,.pdf,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+        <label for="fileInput" class="upload-button">اختيار ملفات المسودات</label>
+        <div id="fileHint" class="hint">يدعم صيغ Excel (.xlsx, .xls) و PDF.</div>
+      </section>
+
+      <section class="panel upload-panel" id="studentsDropZone" style="border-color: #9ca3af; background: linear-gradient(180deg,#fff,#f9fafb);">
+        <div class="upload-icon" style="font-size: 32px;">👥</div>
+        <h2 style="font-size: 15px;">ربط الفصول (اختياري)</h2>
+        <p style="font-size: 12px;">ارفع ملف بيانات الطلاب لربطهم بفصولهم تلقائياً في الكشف.</p>
+        <input id="studentsInput" type="file" multiple accept=".xlsx,.xls" />
+        <label for="studentsInput" class="upload-button" style="background: #6b7280; margin-top: 8px;">اختيار ملف الطلاب</label>
+        <div id="studentsStatus" class="hint" style="margin-top: 10px; font-weight: bold; color: #b42318;">لا يوجد بيانات للطلاب (عمود الفصل مخفي)</div>
+        <button id="clearStudentsBtn" class="danger" style="display: none; margin-top: 10px; padding: 8px; font-size: 12px;">حذف بيانات الطلاب</button>
+      </section>
+
+      <section class="panel info-panel">
+        <h2>من أين أحصل على المسودات؟</h2>
+        <p>من نظام نور، يمكنك استخراج المسودة بصيغة إكسل كما هو موضح في الصورة أدناه:</p>
+        <div class="guide-image-container">
+          <img src="guide.png" alt="شرح استخراج المسودات من نظام نور" class="guide-image" onclick="document.getElementById('imgModal').hidden = false" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" title="اضغط لتكبير الصورة" />
+          <div class="guide-fallback" style="display:none; font-size: 11px; padding: 10px; background: #f3f4f6; border-radius: 8px; text-align: center; color: #6b7280; border: 1px dashed #d1d5db;">
+            قم بتسمية الصورة التوضيحية الخاصة بك باسم <b>guide.png</b> وضعها في نفس مجلد التطبيق لتظهر هنا.
+          </div>
+        </div>
+      </section>
+
+      <section class="panel meta-panel">
+        <h2>بيانات الكليشة الرسمية</h2>
+        <div class="field-grid">
+          <label>الإدارة التعليمية<input id="metaOffice" value="الإدارة العامة للتعليم بمحافظة جدة" /></label>
+          <label>اسم المدرسة<input id="metaSchool" value="عماد الدين زنكي المتوسطة" /></label>
+          <label>العنوان<input id="metaTitle" value="كشف مراجعة الطلاب المكملين" /></label>
+          <label>الصف/المرحلة<input id="metaGrade" value="" placeholder="مثال: الثالث المتوسط" /></label>
+          <label>العام الدراسي<input id="metaYear" value="1446-1447" /></label>
+          <label>الدور<input id="metaRound" value="الدور الأول" /></label>
+          <label>مدير المدرسة<input id="metaDirector" value="" placeholder="اسم مدير المدرسة" /></label>
+          <label>معد الكشف<input id="metaPreparedBy" value="" placeholder="اسم المعد" /></label>
+        </div>
+      </section>
+
+      <section class="panel actions-panel">
+        <button id="printBtn" class="primary" disabled>طباعة الكشف</button>
+        <button id="exportCsvBtn" disabled>تصدير CSV</button>
+        <button id="exportJsonBtn" disabled>تصدير JSON</button>
+        <button id="clearBtn" class="danger" disabled>مسح البيانات</button>
+      </section>
+
+      <div class="developer-credit no-print">
+        تم بواسطة <strong>ياسر الهذلي</strong>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="hero no-print">
+        <div class="hero-content">
+          <span class="eyebrow">أداة ذكية ومحلية %100</span>
+          <h2>مراجعة المسودات بدقة وسرعة</h2>
+          <p>قم برفع مسودات الفصول من نظام نور وسيقوم التطبيق آلياً بحصر الطلاب المكملين وموادهم، وتجهيز الكشف للطباعة بشكل احترافي مع إمكانية استبعاد أي مواد إضافية بنقرة واحدة.</p>
+        </div>
+        <div class="hero-card">
+          <div class="hero-card-icon">⚡</div>
+          <div>حالة المعالجة</div>
+          <strong id="statusText">بانتظار المسودات...</strong>
+        </div>
+      </header>
+
+      <section class="stats-grid no-print">
+        <div class="stat"><span>إجمالي الطلاب</span><strong id="statTotal">0</strong></div>
+        <div class="stat"><span>مواد إكمال</span><strong id="statSubjects">0</strong></div>
+      </section>
+
+      <section class="toolbar no-print">
+        <input id="searchInput" type="search" placeholder="بحث بالاسم أو الهوية أو المادة..." />
+        <select id="subjectFilter"><option value="">كل المواد</option></select>
+        <select id="countFilter"><option value="">كل الأعداد</option></select>
+      </section>
+
+      <section class="global-exclusions no-print" id="globalExclusionsPanel" hidden>
+        <strong>استبعاد مواد (للجميع):</strong>
+        <div id="globalExclusionsList" class="checkbox-group"></div>
+      </section>
+
+      <section class="message no-print" id="messageBox" hidden></section>
+
+      <section class="print-area" id="printArea">
+        <table class="report-table" id="reportTable">
+          <thead>
+            <tr class="official-head-row">
+              <th colspan="6" class="dynamic-colspan">
+                <div class="official-head">
+                  <div class="head-side right">
+                    <div>المملكة العربية السعودية</div>
+                    <div>وزارة التعليم</div>
+                    <div id="printOffice">الإدارة العامة للتعليم بمحافظة جدة</div>
+                  </div>
+                  <div class="head-logo">
+                    <img src="https://upload.wikimedia.org/wikipedia/ar/1/17/Saudi_Ministry_of_Education_Logo_2025.png" class="moe-symbol" alt="وزارة التعليم" />
+                  </div>
+                  <div class="head-side left">
+                    <div id="printSchool">عماد الدين زنكي المتوسطة</div>
+                    <div id="printGrade"></div>
+                    <div>تاريخ الطباعة: <span id="printDate"></span></div>
+                  </div>
+                </div>
+                <div class="report-title">
+                  <strong id="printTitle">كشف مراجعة الطلاب المكملين</strong>
+                  <span>العام الدراسي: <b id="printYear">1446-1447</b> | الدور: <b id="printRound">الدور الأول</b></span>
+                </div>
+              </th>
+            </tr>
+            <tr class="columns-row">
+              <th class="w-serial">م</th>
+              <th>رقم الهوية</th>
+              <th class="w-name">اسم الطالب</th>
+              <th id="classTh" style="display:none;" class="w-class">الفصل</th>
+              <th>النتيجة</th>
+              <th>عدد المواد</th>
+              <th class="w-subjects">مواد الإكمال</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr class="empty-row"><td colspan="6" class="dynamic-colspan">ارفع ملف Excel أو PDF لبدء المراجعة.</td></tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="6" class="dynamic-colspan">
+                <div class="signature-line">
+                  <span>معد الكشف: <b id="printPreparedBy"></b></span>
+                  <span>مدير المدرسة: <b id="printDirector"></b></span>
+                  <span>الختم: ....................</span>
+                </div>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </section>
+    </main>
+  </div>
+
+  <div id="imgModal" class="image-modal no-print" hidden onclick="this.hidden=true">
+    <span class="modal-close">&times;</span>
+    <img src="guide.png" class="modal-content" onclick="event.stopPropagation()">
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="app.js?v=2"></script>
+</body>
+</html>
