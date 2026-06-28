@@ -665,6 +665,8 @@ function renderTable(){
     return;
   }
   
+  const subjectFilterValue = els.subjectFilter.value;
+  
   const generateRowHtml = (r, serial, cName) => {
     const materialsList = normalizeMaterials(r.materials).split(/[،,؛\n]+/).map(s=>s.trim()).filter(Boolean);
     let displayedCount = parseInt(r.completionCount) || 0;
@@ -672,7 +674,13 @@ function renderTable(){
     if(materialsList.length > 0) {
       const activeMaterials = materialsList.filter(m => !state.globalExcludedMaterials.has(m));
       displayedCount = activeMaterials.filter(m => !(r.excludedMaterials || []).includes(m)).length;
-      materialsHtml = activeMaterials.map(m => {
+      
+      let renderMaterials = activeMaterials;
+      if (subjectFilterValue) {
+        renderMaterials = activeMaterials.filter(m => m.includes(subjectFilterValue));
+      }
+      
+      materialsHtml = renderMaterials.map(m => {
         const isExcluded = (r.excludedMaterials || []).includes(m);
         return `<label class="${isExcluded ? 'excluded-material' : ''}"><input type="checkbox" onchange="toggleMaterial(${r.serial}, '${escapeAttr(m)}')" ${isExcluded ? '' : 'checked'}> ${escapeHtml(m)}</label>`;
       }).join('');
@@ -719,6 +727,15 @@ function renderTable(){
       const cName = state.hasClasses ? (state.studentClasses[r.nationalId] || state.studentClasses[r.name] || '-') : '';
       return generateRowHtml(r, idx + 1, cName);
     }).join('');
+  }
+  
+  const printFilterNote = document.getElementById('printFilterNote');
+  const filterNoteSubject = document.getElementById('filterNoteSubject');
+  if(subjectFilterValue && printFilterNote && filterNoteSubject) {
+    printFilterNote.style.display = 'block';
+    filterNoteSubject.textContent = subjectFilterValue;
+  } else if (printFilterNote) {
+    printFilterNote.style.display = 'none';
   }
 }
 window.toggleMaterial = function(serial, materialName){
