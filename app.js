@@ -27,6 +27,7 @@ const els = {
   messageBox: document.getElementById('messageBox'),
   tableBody: document.getElementById('tableBody'),
   searchInput: document.getElementById('searchInput'),
+  resultFilter: document.getElementById('resultFilter'),
   subjectFilter: document.getElementById('subjectFilter'),
   countFilter: document.getElementById('countFilter'),
   groupByClassLabel: document.getElementById('groupByClassLabel'),
@@ -63,6 +64,7 @@ function init(){
   els.clearStudentsBtn.addEventListener('click', clearStudentClasses);
   
   els.searchInput.addEventListener('input', applyFilters);
+  els.resultFilter.addEventListener('change', applyFilters);
   els.subjectFilter.addEventListener('change', applyFilters);
   els.countFilter.addEventListener('change', applyFilters);
   if(els.groupByClassCheckbox) {
@@ -624,6 +626,7 @@ window.toggleGlobalMaterial = function(checkbox){
 
 function applyFilters(){
   const q = normalizeText(els.searchInput.value).toLowerCase();
+  const resF = els.resultFilter ? els.resultFilter.value : '';
   const subj = els.subjectFilter.value;
   const count = els.countFilter.value;
   state.filteredRows = state.rows.filter(r => {
@@ -636,9 +639,10 @@ function applyFilters(){
     }
     const subjMatch = !subj || materialsList.some(m => m.includes(subj) && !state.globalExcludedMaterials.has(m) && !(r.excludedMaterials || []).includes(m));
     const countMatch = !count || String(displayedCount) === String(count);
+    const resultMatch = !resF || (r.result && r.result.includes(resF));
     
     const haystack = [r.name,r.nationalId,r.result,r.materials,r.source].join(' ').toLowerCase();
-    return (!q || haystack.includes(q)) && subjMatch && countMatch;
+    return (!q || haystack.includes(q)) && subjMatch && countMatch && resultMatch;
   });
   render();
 }
