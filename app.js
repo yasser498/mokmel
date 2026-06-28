@@ -29,6 +29,9 @@ const els = {
   searchInput: document.getElementById('searchInput'),
   subjectFilter: document.getElementById('subjectFilter'),
   countFilter: document.getElementById('countFilter'),
+  groupByClassLabel: document.getElementById('groupByClassLabel'),
+  groupByClassCheckbox: document.getElementById('groupByClassCheckbox'),
+  globalExclusionsList: document.getElementById('globalExclusionsList'),
   printBtn: document.getElementById('printBtn'),
   exportCsvBtn: document.getElementById('exportCsvBtn'),
   exportJsonBtn: document.getElementById('exportJsonBtn'),
@@ -59,7 +62,15 @@ function init(){
   els.studentsDropZone.addEventListener('drop', e => handleStudentFiles(e.dataTransfer.files));
   els.clearStudentsBtn.addEventListener('click', clearStudentClasses);
   
-  [els.searchInput, els.subjectFilter, els.countFilter].forEach(el => el.addEventListener('input', applyFilters));
+  els.searchInput.addEventListener('input', applyFilters);
+  els.subjectFilter.addEventListener('change', applyFilters);
+  els.countFilter.addEventListener('change', applyFilters);
+  if(els.groupByClassCheckbox) {
+    els.groupByClassCheckbox.addEventListener('change', (e) => {
+      state.groupByClass = e.target.checked;
+      renderTable();
+    });
+  }
   els.printBtn.addEventListener('click', () => { syncPrintMeta(); window.print(); });
   els.exportCsvBtn.addEventListener('click', exportCsv);
   els.exportJsonBtn.addEventListener('click', exportJson);
@@ -124,11 +135,15 @@ function updateClassUI(){
     els.studentsStatus.style.color = '#047857';
     els.clearStudentsBtn.style.display = 'inline-block';
     els.classTh.style.display = 'table-cell';
+    if(els.groupByClassLabel) els.groupByClassLabel.style.display = 'flex';
   } else {
     els.studentsStatus.textContent = 'لا يوجد بيانات للطلاب (عمود الفصل مخفي)';
     els.studentsStatus.style.color = '#b42318';
     els.clearStudentsBtn.style.display = 'none';
     els.classTh.style.display = 'none';
+    if(els.groupByClassLabel) els.groupByClassLabel.style.display = 'none';
+    state.groupByClass = false;
+    if(els.groupByClassCheckbox) els.groupByClassCheckbox.checked = false;
   }
   
   document.querySelectorAll('.dynamic-colspan').forEach(el => {
@@ -646,10 +661,11 @@ function renderStats(){
 function renderTable(){
   const rows = state.rows.length ? state.filteredRows : [];
   if(!rows.length){
-    els.tableBody.innerHTML = `<tr class="empty-row"><td colspan="6">${state.rows.length ? 'لا توجد نتائج حسب الفلاتر الحالية (أو تم استبعاد مواد كل الطلاب).' : 'ارفع ملف Excel أو PDF لبدء المراجعة.'}</td></tr>`;
+    els.tableBody.innerHTML = `<tr class="empty-row"><td colspan="${state.hasClasses ? 7 : 6}">${state.rows.length ? 'لا توجد نتائج حسب الفلاتر الحالية (أو تم استبعاد مواد كل الطلاب).' : 'ارفع ملف Excel أو PDF لبدء المراجعة.'}</td></tr>`;
     return;
   }
-  els.tableBody.innerHTML = rows.map((r, idx) => {
+  
+  const generateRowHtml = (r, serial, cName) => {
     const materialsList = normalizeMaterials(r.materials).split(/[،,؛\n]+/).map(s=>s.trim()).filter(Boolean);
     let displayedCount = parseInt(r.completionCount) || 0;
     let materialsHtml = '';
@@ -661,20 +677,49 @@ function renderTable(){
         return `<label class="${isExcluded ? 'excluded-material' : ''}"><input type="checkbox" onchange="toggleMaterial(${r.serial}, '${escapeAttr(m)}')" ${isExcluded ? '' : 'checked'}> ${escapeHtml(m)}</label>`;
       }).join('');
     }
-    
-    const classTd = state.hasClasses ? `<td>${escapeHtml(state.studentClasses[r.nationalId] || state.studentClasses[r.name] || '-')}</td>` : '';
-    
+    const classTd = state.hasClasses ? `<td>${escapeHtml(cName)}</td>` : '';
     return `
     <tr data-serial="${r.serial}">
-      <td>${idx + 1}</td>
+      <td>${serial}</td>
       <td>${escapeHtml(r.nationalId || '')}</td>
       <td class="w-name">${escapeHtml(r.name || '')}</td>
       ${classTd}
       <td><span class="badge">${escapeHtml(r.result || '')}</span></td>
       <td>${displayedCount}</td>
       <td class="w-subjects"><div class="materials-list">${materialsHtml}</div></td>
-    </tr>
-  `}).join('');
+    </tr>`;
+  };
+
+  if(state.groupByClass && state.hasClasses) {
+    const grouped = {};
+    rows.forEach(r => {
+      const cName = state.studentClasses[r.nationalId] || state.studentClasses[r.name] || 'غير محدد';
+      if(!grouped[cName]) grouped[cName] = [];
+      grouped[cName].push(r);
+    });
+    
+    const sortedClasses = Object.keys(grouped).sort();
+    let html = '';
+    
+    sortedClasses.forEach((cName, idx) => {
+      const pageBreak = idx > 0 ? 'page-break-before: always;' : '';
+      html += `
+        <tr style="${pageBreak} background: #f1f5f9; font-weight: bold; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;">
+          <td colspan="${state.hasClasses ? 7 : 6}" style="text-align: right; padding: 12px 16px; font-size: 15px; color: #0f172a;">
+            الفصل: ${escapeHtml(cName)}
+          </td>
+        </tr>
+      `;
+      let localSerial = 1;
+      html += grouped[cName].map(r => generateRowHtml(r, localSerial++, cName)).join('');
+    });
+    els.tableBody.innerHTML = html;
+  } else {
+    els.tableBody.innerHTML = rows.map((r, idx) => {
+      const cName = state.hasClasses ? (state.studentClasses[r.nationalId] || state.studentClasses[r.name] || '-') : '';
+      return generateRowHtml(r, idx + 1, cName);
+    }).join('');
+  }
 }
 window.toggleMaterial = function(serial, materialName){
   const row = state.rows.find(r => r.serial === serial);
